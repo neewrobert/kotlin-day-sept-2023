@@ -55,10 +55,26 @@ fun Application.configureSerialization() {
                 }
             }
             post {
-                throw NotImplementedError("POST not supported yet")
+                try {
+                    val task = call.receive<Task>()
+                    TaskRepository.addTask(task)
+                    call.respond(HttpStatusCode.Created)
+                } catch (ex: Exception) {
+                    call.respond(HttpStatusCode.BadRequest)
+                }
             }
             delete("/{taskName}") {
-                throw NotImplementedError("DELETE not supported yet")
+                val name = call.parameters["taskName"]
+                if (name == null) {
+                    call.respond(HttpStatusCode.BadRequest)
+                    return@delete
+                }
+                val removed = TaskRepository.removeTask(name)
+                if (removed) {
+                    call.respond(HttpStatusCode.NoContent)
+                } else {
+                    call.respond(HttpStatusCode.NotFound)
+                }
             }
         }
     }
